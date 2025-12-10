@@ -1,7 +1,10 @@
+import atexit
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Any
 
+import cv2
 from fastmcp import FastMCP
 
 from maa.define import (
@@ -42,6 +45,8 @@ class ObjectRegistry:
 
 
 object_registry = ObjectRegistry()
+# 记录当前会话保存的截图文件路径，用于退出时清理
+_saved_screenshots: list[Path] = []
 
 
 mcp = FastMCP(
@@ -75,7 +80,13 @@ mcp = FastMCP(
     5. 自动化执行循环
        - 调用 ocr(tasker_id) 进行屏幕截图并执行 OCR 识别
        - 根据识别结果调用 click() 或 swipe() 执行相应操作
-       - 重复执行步骤 4，直至任务完成
+       - 重复执行步骤 5，直至任务完成
+
+    屏幕识别策略（重要）：
+    - 优先使用 OCR：始终优先调用 ocr() 进行文字识别，OCR 返回结构化文本数据，token 消耗极低
+    - 按需使用截图：仅当 OCR 结果不足以做出决策时（如需要识别图标、图像、颜色、布局等非文字信息），
+      才调用 screencap() 获取截图文件路径，再通过 read_file 工具读取图片进行视觉识别
+    - 图片识别会消耗大量 token，应尽量避免频繁调用
 
     注意事项：
     - 所有 ID 均为字符串类型，由系统自动生成并管理
@@ -289,6 +300,35 @@ def ocr(tasker_id: str) -> Optional[list]:
 
 
 @mcp.tool(
+    name="screencap",
+    description="""
+    对当前设备屏幕进行截图。
+    参数：
+    - controller_id: 控制器 ID，由 connect_adb_device() 返回
+    返回值：
+    - 成功：返回截图文件的绝对路径，可通过 read_file 工具读取图片内容
+    - 失败：返回 None
+    """,
+)
+def screencap(controller_id: str) -> Optional[str]:
+    controller = object_registry.get(controller_id)
+    if not controller:
+        return None
+    image = controller.post_screencap().wait().get()
+    if image is None:
+        return None
+    # 保存截图到文件，返回路径供大模型按需读取，避免 Base64 占用大量 context
+    screenshots_dir = Path(__file__).parent / "screenshots"
+    screenshots_dir.mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filepath = screenshots_dir / f"screenshot_{timestamp}.png"
+    success = cv2.imwrite(str(filepath), image)
+    if not success:
+        return None
+    _saved_screenshots.append(filepath)
+    return str(filepath.absolute())
+    
+@mcp.tool(
     name="click",
     description="""
     在设备屏幕上执行单点点击操作。
@@ -394,6 +434,15 @@ def click_key(controller_id: str, key: int) -> bool:
         return False
     return controller.post_click_key(key).wait().succeeded
 
+
+def cleanup_screenshots():
+    """清理当前会话保存的临时截图文件"""
+    for filepath in _saved_screenshots:
+        filepath.unlink(missing_ok=True)
+    _saved_screenshots.clear()
+
+
+atexit.register(cleanup_screenshots)
 
 if __name__ == "__main__":
     mcp.run()
