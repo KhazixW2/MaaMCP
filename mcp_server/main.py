@@ -176,7 +176,7 @@ def connect_window(window_name: str) -> Optional[str]:
 
     window_controller = Win32Controller(
         window.hwnd,
-        screencap_method=MaaWin32ScreencapMethodEnum.PrintWindow,
+        screencap_method=MaaWin32ScreencapMethodEnum.FramePool,
         mouse_method=MaaWin32InputMethodEnum.PostMessage,
         keyboard_method=MaaWin32InputMethodEnum.PostMessage,
     )
