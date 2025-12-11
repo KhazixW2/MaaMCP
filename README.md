@@ -420,7 +420,7 @@ MaaMCP is a Model Context Protocol server that exposes MaaFramework's powerful a
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/MaaMCP.git
+   git clone https://github.com/MistEO/MaaMCP.git
    cd MaaMCP
    ```
 
