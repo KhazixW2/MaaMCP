@@ -148,6 +148,10 @@ def connect_adb_device(device_name: str) -> Optional[str]:
         device.input_methods,
         device.config,
     )
+    # 设置默认截图短边为 720p
+    # 手机上文字/图标通常较大，不需要太高清
+    adb_controller.set_screenshot_target_short_side(720)
+
     if not adb_controller.post_connection().wait().succeeded:
         return None
     return object_registry.register(adb_controller)
@@ -180,6 +184,13 @@ def connect_window(window_name: str) -> Optional[str]:
         mouse_method=MaaWin32InputMethodEnum.PostMessage,
         keyboard_method=MaaWin32InputMethodEnum.PostMessage,
     )
+    # 设置默认截图短边为 1080p
+    # 电脑屏幕通常较大，使用更高清的截图
+    window_controller.set_screenshot_target_short_side(1080)
+
+    # 或 使用原始尺寸截图，不进行缩放
+    # window_controller.set_screenshot_use_raw_size(True)
+
     if not window_controller.post_connection().wait().succeeded:
         return None
     return object_registry.register(window_controller)
