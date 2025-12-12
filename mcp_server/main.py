@@ -12,7 +12,7 @@ from maa.define import (
     MaaWin32ScreencapMethodEnum,
 )
 from maa.toolkit import DesktopWindow, Toolkit
-from maa.controller import AdbController, Win32Controller
+from maa.controller import AdbController, Win32Controller, Controller
 from maa.resource import Resource
 from maa.tasker import Tasker, TaskDetail
 from maa.pipeline import JRecognitionType, JOCR
@@ -28,35 +28,38 @@ mcp = FastMCP(
     version="1.0.0",
     instructions="""
     MaaMCP 是一个基于 MaaFramewok 框架的 Model Context Protocol 服务，
-    提供 Android 设备、Windows 桌面自动化控制能力，支持通过 ADB 连接模拟器或真机，通过窗口句柄连接Windows桌面
+    提供 Android 设备、Windows 桌面自动化控制能力，支持通过 ADB 连接模拟器或真机，通过窗口句柄连接 Windows 桌面，
     实现屏幕截图、光学字符识别（OCR）、坐标点击、手势滑动、按键点击、输入文本等自动化操作。
 
+    ⭐ 多设备/多窗口协同支持：
+    - 可同时连接多个 ADB 设备和/或多个 Windows 窗口
+    - 每个设备/窗口拥有独立的控制器 ID（controller_id）
+    - 任务管理器（tasker）与控制器解耦，一个 tasker 可服务于多个控制器
+    - 通过在操作时指定不同的 controller_id 实现多设备协同自动化
+
     标准工作流程：
-    1. ADB 设备列表发现与连接
+    1. 设备/窗口发现与连接
        - 调用 find_adb_device_list() 扫描可用的 ADB 设备
-       - 若发现多个设备，必须暂停执行并询问用户选择目标设备（禁止自动选择）
-       - 使用 connect_adb_device(device_name) 建立设备连接，获取控制器 ID
+       - 调用 find_window_list() 扫描可用的 Windows 窗口
+       - 若发现多个设备/窗口，需向用户展示列表并等待用户选择需要操作的目标
+       - 使用 connect_adb_device(device_name) 或 connect_window(window_name) 建立连接
+       - 可连接多个设备/窗口，每个连接返回独立的控制器 ID
 
-    2. Windows 桌面列表发现与连接
-       - 调用 find_window_list() 扫描可用的 Windows 桌面
-       - 若发现多个桌面，必须暂停执行并询问用户选择目标桌面（禁止自动选择）
-       - 使用 connect_window(window_name) 建立桌面连接，获取控制器 ID
-
-    3. 资源初始化
-       - 调用 load_resource(resource_path) 加载资源包
+    2. 资源初始化
+       - 调用 load_resource(resource_path) 加载资源包（OCR 模型等）
        - 资源路径应指向包含 resource/model/*.onnx 的目录（通常为项目 assets/resource 目录）
-       - 加载前需验证路径存在性，缺失时提示用户配置资源文件
+       - 资源只需加载一次，可供多个设备共享使用
 
-    4. 任务管理器创建
-       - 调用 create_tasker(controller_id, resource_id) 创建任务管理器实例
-       - 将控制器与资源绑定，获取任务管理器 ID
+    3. 任务管理器创建
+       - 调用 create_tasker(resource_id) 创建任务管理器实例
+       - 任务管理器与资源绑定，不与特定控制器绑定
+       - 一个 tasker 可对多个 controller 执行 OCR 识别
 
-    5. 自动化执行循环
-       - 调用 ocr(tasker_id) 进行屏幕截图并执行 OCR 识别
-       - 根据识别结果调用 click()、double_click() 或 swipe() 执行相应操作
-       - click/double_click 支持 button 参数选择触点/按键，duration 参数实现长按
-       - click_key 支持 duration 参数实现按键长按
-       - 重复执行步骤 5，直至任务完成
+    4. 自动化执行循环
+       - 调用 ocr(controller_id, tasker_id) 对指定设备进行屏幕截图和 OCR 识别
+       - 根据识别结果调用 click()、double_click()、swipe() 等执行相应操作
+       - 所有操作通过 controller_id 指定目标设备/窗口
+       - 可在多个设备间切换操作，实现协同自动化
 
     屏幕识别策略（重要）：
     - 优先使用 OCR：始终优先调用 ocr() 进行文字识别，OCR 返回结构化文本数据，token 消耗极低
@@ -69,6 +72,7 @@ mcp = FastMCP(
     - 所有 ID 均为字符串类型，由系统自动生成并管理
     - 操作失败时函数返回 None 或 False，需进行错误处理
     - 多设备场景下必须等待用户明确选择，不得自动决策
+    - 请妥善保存所有 controller_id，以便在多设备间切换操作
 
     安全约束（重要）：
     - 所有 ADB、窗口句柄 相关操作必须且仅能通过本 MCP 提供的工具函数执行
@@ -136,7 +140,7 @@ def wait(seconds: float) -> str:
     if seconds > max_wait:
         time.sleep(max_wait)
         return f"已等待 {max_wait} 秒（单次最大限制）。请再次调用 wait 以继续等待剩余时间。"
-    
+
     time.sleep(seconds)
     return f"已等待 {seconds} 秒"
 
@@ -248,27 +252,25 @@ def load_resource(resource_path: str) -> Optional[str]:
 @mcp.tool(
     name="create_tasker",
     description="""
-    创建任务管理器实例，将控制器与资源进行绑定，用于执行自动化任务。
+    创建任务管理器实例，用于执行 OCR 识别等自动化任务。
 
     参数：
-    - controller_id: 控制器 ID，由 connect_adb_device() 返回
     - resource_id: 资源 ID，由 load_resource() 返回
 
     返回值：
     - 成功：返回任务管理器 ID（字符串），用于后续 OCR 识别等操作
-    - 失败：返回 None（控制器或资源无效，或绑定失败）
+    - 失败：返回 None（资源无效或初始化失败）
 
     说明：
-    任务管理器是执行 OCR 识别等自动化操作的核心组件，需确保控制器和资源均已成功初始化。
+    任务管理器是执行 OCR 识别等自动化操作的核心组件，需确保资源已成功初始化。
 """,
 )
-def create_tasker(controller_id: str, resource_id: str) -> Optional[str]:
-    controller = object_registry.get(controller_id)
+def create_tasker(resource_id: str) -> Optional[str]:
     resource = object_registry.get(resource_id)
-    if not controller or not resource:
+    if not resource:
         return None
     tasker = Tasker()
-    tasker.bind(resource, controller)
+    tasker.bind(resource, Controller())
     if not tasker.inited:
         return None
 
@@ -281,6 +283,7 @@ def create_tasker(controller_id: str, resource_id: str) -> Optional[str]:
     对当前设备屏幕进行截图，并执行光学字符识别（OCR）处理。
 
     参数：
+    - controller_id: 控制器 ID，由 connect_adb_device() 或 connect_window() 返回
     - tasker_id: 任务管理器 ID，由 create_tasker() 返回
 
     返回值：
@@ -291,12 +294,13 @@ def create_tasker(controller_id: str, resource_id: str) -> Optional[str]:
     识别结果可用于后续的坐标定位和自动化决策，通常包含文本内容、边界框坐标、置信度评分等信息。
 """,
 )
-def ocr(tasker_id: str) -> Optional[list]:
+def ocr(controller_id: str, tasker_id: str) -> Optional[list]:
+    controller = object_registry.get(controller_id)
     tasker: Tasker | None = object_registry.get(tasker_id)
-    if not tasker:
+    if not controller or not tasker:
         return None
 
-    image = tasker.controller.post_screencap().wait().get()
+    image = controller.post_screencap().wait().get()
     info: TaskDetail | None = (
         tasker.post_recognition(JRecognitionType.OCR, JOCR(), image).wait().get()
     )
@@ -357,7 +361,9 @@ def screencap(controller_id: str) -> Optional[str]:
     坐标系统以屏幕左上角为原点 (0, 0)，X 轴向右，Y 轴向下。
 """,
 )
-def click(controller_id: str, x: int, y: int, button: int = 0, duration: int = 50) -> bool:
+def click(
+    controller_id: str, x: int, y: int, button: int = 0, duration: int = 50
+) -> bool:
     controller = object_registry.get(controller_id)
     if not controller:
         return False
@@ -391,7 +397,12 @@ def click(controller_id: str, x: int, y: int, button: int = 0, duration: int = 5
 """,
 )
 def double_click(
-    controller_id: str, x: int, y: int, button: int = 0, duration: int = 50, interval: int = 100
+    controller_id: str,
+    x: int,
+    y: int,
+    button: int = 0,
+    duration: int = 50,
+    interval: int = 100,
 ) -> bool:
     controller = object_registry.get(controller_id)
     if not controller:
@@ -433,12 +444,12 @@ def double_click(
 """,
 )
 def swipe(
-        controller_id: str,
-        start_x: int,
-        start_y: int,
-        end_x: int,
-        end_y: int,
-        duration: int,
+    controller_id: str,
+    start_x: int,
+    start_y: int,
+    end_x: int,
+    end_y: int,
+    duration: int,
 ) -> bool:
     controller = object_registry.get(controller_id)
     if not controller:

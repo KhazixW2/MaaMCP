@@ -28,6 +28,7 @@ MaaMCP 是一个 MCP 服务器，将 MaaFramework 的强大自动化能力通过
 
 - 🤖 **Android 自动化** - 通过 ADB 连接并控制 Android 设备/模拟器
 - 🖥️ **Windows 自动化** - 控制 Windows 桌面应用程序
+- 🔗 **多设备协同** - 同时控制多个设备/窗口，实现跨设备自动化
 - 👁️ **智能识别** - 使用 OCR 识别屏幕文字内容
 - 🎯 **精准操作** - 执行点击、滑动、文本输入、按键等操作
 - 📸 **屏幕截图** - 获取实时屏幕截图进行视觉分析
@@ -137,7 +138,7 @@ MaaMCP 会自动：
 
 ### 工作流程
 
-MaaMCP 遵循严格的操作流程：
+MaaMCP 遵循严格的操作流程，支持多设备/多窗口协同工作：
 
 ```mermaid
 graph LR
@@ -148,10 +149,10 @@ graph LR
 ```
 
 1. **扫描** - 使用 `find_adb_device_list` 或 `find_window_list`
-2. **连接** - 使用 `connect_adb_device` 或 `connect_window`
-3. **加载** - 使用 `load_resource` 加载 OCR 模型
-4. **创建** - 使用 `create_tasker` 创建任务管理器
-5. **操作** - 使用 OCR、点击、滑动等工具执行自动化
+2. **连接** - 使用 `connect_adb_device` 或 `connect_window`（可连接多个设备/窗口，获得多个控制器 ID）
+3. **加载** - 使用 `load_resource` 加载 OCR 模型（只需加载一次）
+4. **创建** - 使用 `create_tasker` 创建任务管理器（只需创建一次，可服务多个控制器）
+5. **操作** - 通过指定不同的控制器 ID，对多个设备/窗口执行 OCR、点击、滑动等自动化操作
 
 ### 安全说明
 
@@ -191,6 +192,7 @@ MaaMCP is a Model Context Protocol server that exposes MaaFramework's powerful a
 
 - 🤖 **Android Automation** - Connect and control Android devices/emulators via ADB
 - 🖥️ **Windows Automation** - Control Windows desktop applications
+- 🔗 **Multi-Device Coordination** - Control multiple devices/windows simultaneously for cross-device automation
 - 👁️ **Smart Recognition** - Use OCR to recognize on-screen text
 - 🎯 **Precise Operations** - Execute clicks, swipes, text input, key presses, and more
 - 📸 **Screenshots** - Capture real-time screenshots for visual analysis
@@ -296,7 +298,7 @@ MaaMCP will automatically:
 
 ### Workflow
 
-MaaMCP follows a strict operational workflow:
+MaaMCP follows a strict operational workflow with multi-device/window coordination support:
 
 ```mermaid
 graph LR
@@ -307,10 +309,10 @@ graph LR
 ```
 
 1. **Scan** - Use `find_adb_device_list` or `find_window_list`
-2. **Connect** - Use `connect_adb_device` or `connect_window`
-3. **Load** - Use `load_resource` to load OCR models
-4. **Create** - Use `create_tasker` to create task manager
-5. **Operate** - Use OCR, click, swipe, etc. for automation
+2. **Connect** - Use `connect_adb_device` or `connect_window` (can connect multiple devices/windows, each gets a unique controller ID)
+3. **Load** - Use `load_resource` to load OCR models (only needs to be loaded once)
+4. **Create** - Use `create_tasker` to create task manager (only needs to be created once, can serve multiple controllers)
+5. **Operate** - Execute OCR, click, swipe, etc. on multiple devices/windows by specifying different controller IDs
 
 ### Security Notes
 
