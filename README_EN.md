@@ -192,6 +192,7 @@ graph LR
 ### OCR recognition fails with "Failed to load det or rec" or prompts that resources do not exist
 
 On first use, OCR model files will be automatically downloaded. However, download failures may occur. Please check the data directory:
+
 - Windows: `C:\Users\<username>\AppData\Local\MaaMCP\resource\model\ocr\`
 - macOS: `~/Library/Application Support/MaaMCP/resource/model/ocr/`
 - Linux: `~/.local/share/MaaMCP/resource/model/ocr/`
