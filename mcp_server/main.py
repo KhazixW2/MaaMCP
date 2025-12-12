@@ -68,6 +68,21 @@ mcp = FastMCP(
     - 多设备场景下必须等待用户明确选择，不得自动决策
     - 请妥善保存 controller_id 和 resource_id，以便在多设备间切换操作
 
+    Windows 窗口控制故障排除：
+    若使用 connect_window() 连接窗口后出现异常，可尝试切换截图/输入方式（需重新连接）：
+
+    截图异常（画面为空、纯黑、花屏等）：
+      - 多尝试几次（3-5次）确认是否为偶发问题，不要一次失败就切换
+      - 若持续异常，按优先级切换截图方式重新连接：
+        FramePool → PrintWindow → GDI → DXGI_DesktopDup_Window → ScreenDC
+      - 最后手段：DXGI_DesktopDup（截取整个桌面，触控坐标会不正确，仅用于排查问题）
+
+    键鼠操作无响应（操作后界面无变化）：
+      - 多尝试几次（3-5次）确认是否为偶发问题，不要一次失败就切换
+      - 若持续无响应，按优先级切换输入方式重新连接：
+        鼠标：PostMessage → PostMessageWithCursorPos → Seize
+        键盘：PostMessage → Seize
+
     安全约束（重要）：
     - 所有 ADB、窗口句柄 相关操作必须且仅能通过本 MCP 提供的工具函数执行
     - 严禁在终端中直接执行 adb 命令（如 adb devices、adb shell 等）
