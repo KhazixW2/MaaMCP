@@ -37,20 +37,24 @@ Talk is cheap, 请看: **[🎞️ Bilibili 视频演示](https://www.bilibili.co
 ### 功能特性
 
 #### 🔍 设备发现与连接
+
 - `find_adb_device_list` - 扫描可用的 ADB 设备
 - `find_window_list` - 扫描可用的 Windows 窗口
 - `connect_adb_device` - 连接到 Android 设备
 - `connect_window` - 连接到 Windows 窗口
 
 #### 📦 资源管理
+
 - `load_resource` - 加载 OCR 模型和图像资源
 - `create_tasker` - 创建自动化任务管理器
 
 #### 👀 屏幕识别
+
 - `ocr` - 光学字符识别（高效，推荐优先使用）
 - `screencap` - 屏幕截图（按需使用，token 开销大）
 
 #### 🎮 设备控制
+
 - `click` - 点击指定坐标
 - `swipe` - 滑动手势
 - `input_text` - 输入文本
@@ -63,63 +67,64 @@ Talk is cheap, 请看: **[🎞️ Bilibili 视频演示](https://www.bilibili.co
 
 - Python 3.8+
 - Git
-- [MaaFramework Release 包](https://github.com/MaaXYZ/MaaFramework/releases)（需放置于 `deps/` 目录）
 - 对于 Android 自动化：ADB 和已连接的设备/模拟器
 - 对于 Windows 自动化：无需额外配置
 
 #### 安装步骤
 
 1. **克隆仓库**
-   ```bash
-   git clone https://github.com/MistEO/MaaMCP.git
-   cd MaaMCP
-   ```
 
-2. **下载 MaaFramework**
+    ```bash
+    git clone https://github.com/MistEO/MaaMCP.git
+    cd MaaMCP
+    ```
 
-   从 [MaaFramework Releases](https://github.com/MaaXYZ/MaaFramework/releases) 下载最新版本，解压到 `deps/` 目录。
+2. **下载 OCR 模型**（大文件，可能需要一些时间）
 
-3. **下载 OCR 模型**（大文件，可能需要一些时间）
-   ```bash
-   git submodule update --init --recursive
-   ```
+    ```bash
+    git submodule update --init --recursive
+    ```
 
-   如果 git 下载失败，可前往 [Mirror酱](https://mirrorchyan.com/zh/projects?rid=MaaCommonAssets) 手动下载后解压到 `assets/MaaCommonAssets`。
+    如果 git 下载失败，可前往 [Mirror酱](https://mirrorchyan.com/zh/projects?rid=MaaCommonAssets) 手动下载后解压到 `assets/MaaCommonAssets`。
 
-4. **配置 OCR 模型**
-   ```bash
-   python configure.py
-   ```
+3. **配置 OCR 模型**
 
-5. **安装 Python 依赖**
+    ```bash
+    python configure.py
+    ```
 
-   **重要**：MCP 客户端需要能够访问这些依赖。有两种安装方式：
+4. **安装 Python 依赖**
 
-   **方式 A：全局安装（推荐，适用于所有 MCP 客户端）**
-   ```bash
-   pip install maafw fastmcp opencv-python
-   ```
+    **重要**：MCP 客户端需要能够访问这些依赖。有两种安装方式：
 
-   **方式 B：虚拟环境安装（需要在配置中指定虚拟环境的 Python 路径）**
-   ```bash
-   # 创建虚拟环境
-   python -m venv .venv
+    **方式 A：全局安装（推荐，适用于所有 MCP 客户端）**
 
-   # 激活虚拟环境
-   # Windows:
-   .venv\Scripts\activate
-   # macOS/Linux:
-   source .venv/bin/activate
+    ```bash
+    pip install maafw fastmcp opencv-python
+    ```
 
-   # 安装依赖
-   pip install maafw fastmcp opencv-python
-   ```
+    **方式 B：虚拟环境安装（需要在配置中指定虚拟环境的 Python 路径）**
 
-   如果使用方式 B，需要在后续 MCP 配置中使用虚拟环境的 Python 路径。
+    ```bash
+    # 创建虚拟环境
+    python -m venv .venv
+
+    # 激活虚拟环境
+    # Windows:
+    .venv\Scripts\activate
+    # macOS/Linux:
+    source .venv/bin/activate
+
+    # 安装依赖
+    pip install maafw fastmcp opencv-python
+    ```
+
+    如果使用方式 B，需要在后续 MCP 配置中使用虚拟环境的 Python 路径。
 
 #### 配置 MCP 客户端
 
 **注意**：如果使用虚拟环境安装依赖（方式 B），请将配置中的 `"command": "python"` 替换为虚拟环境的 Python 完整路径：
+
 - Windows: `"F:/Project/Python/MaaMCP/.venv/Scripts/python.exe"`
 - macOS/Linux: `"/path/to/MaaMCP/.venv/bin/python"`
 
@@ -131,6 +136,7 @@ Talk is cheap, 请看: **[🎞️ Bilibili 视频演示](https://www.bilibili.co
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 **使用全局 Python（方式 A）：**
+
 ```json
 {
   "mcpServers": {
@@ -144,6 +150,7 @@ Talk is cheap, 请看: **[🎞️ Bilibili 视频演示](https://www.bilibili.co
 ```
 
 **使用虚拟环境（方式 B）：**
+
 ```json
 {
   "mcpServers": {
@@ -161,6 +168,7 @@ Talk is cheap, 请看: **[🎞️ Bilibili 视频演示](https://www.bilibili.co
 在项目根目录创建或编辑 `.cursor/mcp.json`：
 
 **使用全局 Python（方式 A）：**
+
 ```json
 {
   "mcpServers": {
@@ -174,6 +182,7 @@ Talk is cheap, 请看: **[🎞️ Bilibili 视频演示](https://www.bilibili.co
 ```
 
 **使用虚拟环境（方式 B）：**
+
 ```json
 {
   "mcpServers": {
@@ -191,6 +200,7 @@ Talk is cheap, 请看: **[🎞️ Bilibili 视频演示](https://www.bilibili.co
 在项目根目录创建或编辑 `.claude/settings.local.json`：
 
 **使用全局 Python（方式 A）：**
+
 ```json
 {
   "mcpServers": {
@@ -204,6 +214,7 @@ Talk is cheap, 请看: **[🎞️ Bilibili 视频演示](https://www.bilibili.co
 ```
 
 **使用虚拟环境（方式 B）：**
+
 ```json
 {
   "mcpServers": {
@@ -232,6 +243,7 @@ codex mcp add maa -- python C:/path/to/MaaMCP/mcp_server/main.py
 配置将自动保存到 `~/.codex/config.toml`。配置在 CLI 和 IDE 扩展之间共享。
 
 查看和管理 MCP 服务器：
+
 ```bash
 # 列出所有 MCP 服务器
 codex mcp list
@@ -245,16 +257,19 @@ codex mcp remove maa
 配置完成后，在 Claude 中可以这样使用：
 
 **Android 自动化示例：**
-```
+
+```text
 请帮我连接 Android 设备，然后识别屏幕上的文字内容
 ```
 
 **Windows 自动化示例：**
-```
+
+```text
 请连接名为 "Visual Studio Code" 的窗口，识别其中的文本
 ```
 
 MaaMCP 会自动：
+
 1. 扫描可用设备/窗口
 2. 建立连接
 3. 加载必要的资源
@@ -282,7 +297,7 @@ graph LR
 
 #### 项目结构
 
-```
+```text
 MaaMCP/
 ├── mcp_server/
 │   ├── main.py              # MCP 服务器主文件
@@ -317,6 +332,7 @@ python install.py v1.0.0
 ### 安全说明
 
 ⚠️ **重要安全约束**：
+
 - 所有 ADB 和窗口操作必须通过 MCP 工具执行
 - 禁止直接执行 `adb` 命令或窗口句柄 API
 - 这确保了 AI 助手操作的可控性和安全性
@@ -326,6 +342,7 @@ python install.py v1.0.0
 #### OCR 识别失败，报错 "Failed to load det or rec"
 
 确保已正确执行步骤 3 和 4：
+
 1. 检查 `assets/MaaCommonAssets/OCR` 目录是否存在
 2. 重新运行 `python configure.py`
 3. 验证 `assets/resource/model/ocr` 目录包含模型文件
@@ -347,19 +364,21 @@ Windows 10/11 自带的 "Python" 只是安装器。请从 [python.org](https://w
 **解决方案**：
 
 1. **推荐方案**：在全局 Python 中安装依赖
-   ```bash
-   pip install maafw fastmcp opencv-python
-   ```
+
+    ```bash
+    pip install maafw fastmcp opencv-python
+    ```
 
 2. **备选方案**：在 MCP 配置中使用虚拟环境的 Python 完整路径
-   - Windows: 将 `"command": "python"` 改为 `"command": "C:/path/to/.venv/Scripts/python.exe"`
-   - macOS/Linux: 改为 `"command": "/path/to/.venv/bin/python"`
+    - Windows: 将 `"command": "python"` 改为 `"command": "C:/path/to/.venv/Scripts/python.exe"`
+    - macOS/Linux: 改为 `"command": "/path/to/.venv/bin/python"`
 
 3. **验证依赖**：
-   ```bash
-   # 使用配置中的 Python 路径测试
-   python -c "import maafw, fastmcp; print('Dependencies OK')"
-   ```
+
+    ```bash
+    # 使用配置中的 Python 路径测试
+    python -c "import maafw, fastmcp; print('Dependencies OK')"
+    ```
 
 ### 许可证
 
@@ -388,20 +407,24 @@ MaaMCP is a Model Context Protocol server that exposes MaaFramework's powerful a
 ### Features
 
 #### 🔍 Device Discovery & Connection
+
 - `find_adb_device_list` - Scan available ADB devices
 - `find_window_list` - Scan available Windows windows
 - `connect_adb_device` - Connect to Android device
 - `connect_window` - Connect to Windows window
 
 #### 📦 Resource Management
+
 - `load_resource` - Load OCR models and image resources
 - `create_tasker` - Create automation task manager
 
 #### 👀 Screen Recognition
+
 - `ocr` - Optical Character Recognition (efficient, recommended)
 - `screencap` - Screenshot capture (use sparingly, high token cost)
 
 #### 🎮 Device Control
+
 - `click` - Click at coordinates
 - `swipe` - Swipe gesture
 - `input_text` - Input text
@@ -414,61 +437,62 @@ MaaMCP is a Model Context Protocol server that exposes MaaFramework's powerful a
 
 - Python 3.8+
 - Git
-- [MaaFramework Release](https://github.com/MaaXYZ/MaaFramework/releases) (place in `deps/` directory)
 - For Android automation: ADB and connected device/emulator
 - For Windows automation: No additional setup required
 
 #### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone https://github.com/MistEO/MaaMCP.git
-   cd MaaMCP
-   ```
 
-2. **Download MaaFramework**
+    ```bash
+    git clone https://github.com/MistEO/MaaMCP.git
+    cd MaaMCP
+    ```
 
-   Download the latest release from [MaaFramework Releases](https://github.com/MaaXYZ/MaaFramework/releases) and extract to `deps/` directory.
+2. **Download OCR models** (large files, may take time)
 
-3. **Download OCR models** (large files, may take time)
-   ```bash
-   git submodule update --init --recursive
-   ```
+    ```bash
+    git submodule update --init --recursive
+    ```
 
-4. **Configure OCR models**
-   ```bash
-   python configure.py
-   ```
+3. **Configure OCR models**
 
-5. **Install Python dependencies**
+    ```bash
+    python configure.py
+    ```
 
-   **Important**: MCP clients need to access these dependencies. Two installation methods:
+4. **Install Python dependencies**
 
-   **Method A: Global installation (Recommended, works for all MCP clients)**
-   ```bash
-   pip install maafw fastmcp opencv-python
-   ```
+    **Important**: MCP clients need to access these dependencies. Two installation methods:
 
-   **Method B: Virtual environment installation (Requires specifying venv Python path in config)**
-   ```bash
-   # Create virtual environment
-   python -m venv .venv
+    **Method A: Global installation (Recommended, works for all MCP clients)**
 
-   # Activate virtual environment
-   # Windows:
-   .venv\Scripts\activate
-   # macOS/Linux:
-   source .venv/bin/activate
+    ```bash
+    pip install maafw fastmcp opencv-python
+    ```
 
-   # Install dependencies
-   pip install maafw fastmcp opencv-python
-   ```
+    **Method B: Virtual environment installation (Requires specifying venv Python path in config)**
 
-   If using Method B, you must specify the virtual environment's Python path in MCP configuration.
+    ```bash
+    # Create virtual environment
+    python -m venv .venv
+
+    # Activate virtual environment
+    # Windows:
+    .venv\Scripts\activate
+    # macOS/Linux:
+    source .venv/bin/activate
+
+    # Install dependencies
+    pip install maafw fastmcp opencv-python
+    ```
+
+    If using Method B, you must specify the virtual environment's Python path in MCP configuration.
 
 #### Configure MCP Clients
 
 **Note**: If using virtual environment (Method B), replace `"command": "python"` with the full Python path:
+
 - Windows: `"C:/path/to/MaaMCP/.venv/Scripts/python.exe"`
 - macOS/Linux: `"/path/to/MaaMCP/.venv/bin/python"`
 
@@ -480,6 +504,7 @@ Edit Claude Desktop configuration:
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 **Using global Python (Method A):**
+
 ```json
 {
   "mcpServers": {
@@ -493,6 +518,7 @@ Edit Claude Desktop configuration:
 ```
 
 **Using virtual environment (Method B):**
+
 ```json
 {
   "mcpServers": {
@@ -510,6 +536,7 @@ Edit Claude Desktop configuration:
 Create or edit `.cursor/mcp.json` in project root:
 
 **Using global Python (Method A):**
+
 ```json
 {
   "mcpServers": {
@@ -523,6 +550,7 @@ Create or edit `.cursor/mcp.json` in project root:
 ```
 
 **Using virtual environment (Method B):**
+
 ```json
 {
   "mcpServers": {
@@ -540,6 +568,7 @@ Create or edit `.cursor/mcp.json` in project root:
 Create or edit `.claude/settings.local.json` in project root:
 
 **Using global Python (Method A):**
+
 ```json
 {
   "mcpServers": {
@@ -553,6 +582,7 @@ Create or edit `.claude/settings.local.json` in project root:
 ```
 
 **Using virtual environment (Method B):**
+
 ```json
 {
   "mcpServers": {
@@ -581,6 +611,7 @@ codex mcp add maa -- python C:/path/to/MaaMCP/mcp_server/main.py
 The configuration will be automatically saved to `~/.codex/config.toml`. Configuration is shared between CLI and IDE extension.
 
 View and manage MCP servers:
+
 ```bash
 # List all MCP servers
 codex mcp list
@@ -594,16 +625,19 @@ codex mcp remove maa
 After configuration, you can use it in Claude:
 
 **Android Automation Example:**
-```
+
+```text
 Please connect to my Android device and recognize the text on screen
 ```
 
 **Windows Automation Example:**
-```
+
+```text
 Please connect to the "Visual Studio Code" window and recognize its text
 ```
 
 MaaMCP will automatically:
+
 1. Scan available devices/windows
 2. Establish connection
 3. Load necessary resources
@@ -631,7 +665,7 @@ graph LR
 
 #### Project Structure
 
-```
+```text
 MaaMCP/
 ├── mcp_server/
 │   ├── main.py              # MCP server main file
@@ -666,6 +700,7 @@ The built package will be in the `install/` directory.
 ### Security Notes
 
 ⚠️ **Important Security Constraints**:
+
 - All ADB and window operations must go through MCP tools
 - Direct execution of `adb` commands or window handle APIs is prohibited
 - This ensures AI assistant operations are controlled and secure
@@ -675,6 +710,7 @@ The built package will be in the `install/` directory.
 #### OCR recognition fails with "Failed to load det or rec"
 
 Ensure steps 3 and 4 were completed correctly:
+
 1. Check if `assets/MaaCommonAssets/OCR` directory exists
 2. Re-run `python configure.py`
 3. Verify `assets/resource/model/ocr` directory contains model files
@@ -696,19 +732,21 @@ This usually happens because the Python environment used by MCP clients doesn't 
 **Solutions**:
 
 1. **Recommended**: Install dependencies in global Python
-   ```bash
-   pip install maafw fastmcp opencv-python
-   ```
+
+    ```bash
+    pip install maafw fastmcp opencv-python
+    ```
 
 2. **Alternative**: Use virtual environment's full Python path in MCP configuration
-   - Windows: Change `"command": "python"` to `"command": "C:/path/to/.venv/Scripts/python.exe"`
-   - macOS/Linux: Change to `"command": "/path/to/.venv/bin/python"`
+    - Windows: Change `"command": "python"` to `"command": "C:/path/to/.venv/Scripts/python.exe"`
+    - macOS/Linux: Change to `"command": "/path/to/.venv/bin/python"`
 
 3. **Verify dependencies**:
-   ```bash
-   # Test using the Python path from your config
-   python -c "import maafw, fastmcp; print('Dependencies OK')"
-   ```
+
+    ```bash
+    # Test using the Python path from your config
+    python -c "import maafw, fastmcp; print('Dependencies OK')"
+    ```
 
 ### License
 
