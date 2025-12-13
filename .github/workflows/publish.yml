@@ -1,9 +1,10 @@
 name: Publish to PyPI
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:  # 允许手动触发
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: # 允许手动触发
 
 jobs:
   build:
@@ -39,7 +40,7 @@ jobs:
       name: pypi
       url: https://pypi.org/p/maa-mcp
     permissions:
-      id-token: write  # 用于 Trusted Publisher 身份验证
+      id-token: write # 用于 Trusted Publisher 身份验证
 
     steps:
       - name: Download all the dists
@@ -56,7 +57,7 @@ jobs:
     name: Publish to TestPyPI
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'  # 仅手动触发时发布到 TestPyPI
+    if: github.event_name == 'workflow_dispatch' # 仅手动触发时发布到 TestPyPI
     environment:
       name: testpypi
       url: https://test.pypi.org/p/maa-mcp
@@ -74,4 +75,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-
