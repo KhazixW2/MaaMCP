@@ -1,6 +1,9 @@
 import atexit
 import time
+from dataclasses import dataclass
+from enum import Enum, auto
 from pathlib import Path
+from typing import Optional
 
 from maa.toolkit import Toolkit
 
@@ -16,8 +19,24 @@ ensure_dirs()
 Toolkit.init_option(get_config_dir())
 
 
+class ControllerType(Enum):
+    """控制器类型枚举"""
+    ADB = auto()
+    WIN32 = auto()
+
+
+@dataclass
+class ControllerInfo:
+    """控制器信息，用于记录控制器类型和配置"""
+    controller_type: ControllerType
+    # Win32 专用：键盘输入方式
+    keyboard_method: Optional[str] = None
+
+
 # 全局对象注册表
 object_registry = ObjectRegistry()
+# 控制器信息注册表：controller_id -> ControllerInfo
+controller_info_registry: dict[str, ControllerInfo] = {}
 
 # 记录当前会话保存的截图文件路径，用于退出时清理
 _saved_screenshots: list[Path] = []

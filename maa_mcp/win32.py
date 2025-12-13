@@ -4,7 +4,13 @@ from maa.define import MaaWin32InputMethodEnum, MaaWin32ScreencapMethodEnum
 from maa.toolkit import DesktopWindow, Toolkit
 from maa.controller import Win32Controller
 
-from maa_mcp.core import mcp, object_registry
+from maa_mcp.core import (
+    mcp,
+    object_registry,
+    controller_info_registry,
+    ControllerInfo,
+    ControllerType,
+)
 
 # 截图/鼠标/键盘方法名称到枚举值的映射
 _SCREENCAP_METHOD_MAP = {
@@ -118,5 +124,10 @@ def connect_window(
 
     if not window_controller.post_connection().wait().succeeded:
         return None
-    return object_registry.register(window_controller)
+    controller_id = object_registry.register(window_controller)
+    controller_info_registry[controller_id] = ControllerInfo(
+        controller_type=ControllerType.WIN32,
+        keyboard_method=keyboard_method,
+    )
+    return controller_id
 

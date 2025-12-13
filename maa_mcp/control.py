@@ -1,6 +1,7 @@
 import time
+from typing import Union
 
-from maa_mcp.core import mcp, object_registry
+from maa_mcp.core import mcp, object_registry, controller_info_registry, ControllerType
 
 
 @mcp.tool(
@@ -218,10 +219,18 @@ def click_key(controller_id: str, key: int, duration: int = 50) -> bool:
 """)
 def keyboard_shortcut(
     controller_id: str, modifiers: list[int], primary_key: int, duration: int = 50
-) -> bool:
+) -> Union[bool, str]:
     controller = object_registry.get(controller_id)
     if not controller:
         return False
+
+    # 检查控制器类型和配置
+    info = controller_info_registry.get(controller_id)
+    if info:
+        if info.controller_type == ControllerType.ADB:
+            return "keyboard_shortcut 不支持 ADB 控制器，该方法仅适用于 Windows 窗口控制器。请使用 click_key 进行单个按键操作。"
+        if info.controller_type == ControllerType.WIN32 and info.keyboard_method != "Seize":
+            return f"keyboard_shortcut 仅支持 Seize 键盘模式，当前为 {info.keyboard_method}。可对同一窗口调用 connect_window(keyboard_method='Seize') 获取新 controller_id，原 controller_id 仍可用于其他操作。"
 
     for modifier in modifiers:
         if not controller.post_key_down(modifier).wait().succeeded:
@@ -256,8 +265,14 @@ def keyboard_shortcut(
     注意：该方法仅对 Windows 窗口控制有效，无法作用于 ADB。
     """,
 )
-def scroll(controller_id: str, x: int, y: int) -> bool:
+def scroll(controller_id: str, x: int, y: int) -> Union[bool, str]:
     controller = object_registry.get(controller_id)
     if not controller:
         return False
+
+    # 检查控制器类型
+    info = controller_info_registry.get(controller_id)
+    if info and info.controller_type == ControllerType.ADB:
+        return "scroll 不支持 ADB 控制器，该方法仅适用于 Windows 窗口控制器。请使用 swipe 进行滑动操作。"
+
     return controller.post_scroll(x, y).wait().succeeded

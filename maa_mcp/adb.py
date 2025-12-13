@@ -3,7 +3,13 @@ from typing import Optional
 from maa.toolkit import Toolkit
 from maa.controller import AdbController
 
-from maa_mcp.core import mcp, object_registry
+from maa_mcp.core import (
+    mcp,
+    object_registry,
+    controller_info_registry,
+    ControllerInfo,
+    ControllerType,
+)
 
 
 @mcp.tool(
@@ -61,5 +67,9 @@ def connect_adb_device(device_name: str) -> Optional[str]:
 
     if not adb_controller.post_connection().wait().succeeded:
         return None
-    return object_registry.register(adb_controller)
+    controller_id = object_registry.register(adb_controller)
+    controller_info_registry[controller_id] = ControllerInfo(
+        controller_type=ControllerType.ADB
+    )
+    return controller_id
 
