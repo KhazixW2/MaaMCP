@@ -1,5 +1,4 @@
 import atexit
-import time
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
@@ -106,24 +105,6 @@ mcp = FastMCP(
     - 严禁绕过本 MCP 工具自行实现设备控制逻辑
     """,
 )
-
-
-@mcp.tool(
-    name="wait",
-    description="""
-    等待指定的时间（秒）。
-    当需要等待界面加载、动画完成或操作生效时，以及其他需要等待的情况下使用。
-    注意：由于客户端超时限制，单次等待最长支持 60 秒。如果需要等待更长时间，请多次调用。
-    """,
-)
-def wait(seconds: float) -> str:
-    max_wait = 60.0
-    if seconds > max_wait:
-        time.sleep(max_wait)
-        return f"已等待 {max_wait} 秒（单次最大限制）。请再次调用 wait 以继续等待剩余时间。"
-
-    time.sleep(seconds)
-    return f"已等待 {seconds} 秒"
 
 
 def cleanup_screenshots():
