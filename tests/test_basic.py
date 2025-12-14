@@ -20,8 +20,6 @@ class TestImport:
             get_resource_dir,
             get_model_dir,
             get_ocr_dir,
-            get_config_dir,
-            get_debug_dir,
             get_screenshots_dir,
         )
 
@@ -32,8 +30,6 @@ class TestImport:
         assert isinstance(get_resource_dir(), Path)
         assert isinstance(get_model_dir(), Path)
         assert isinstance(get_ocr_dir(), Path)
-        assert isinstance(get_config_dir(), Path)
-        assert isinstance(get_debug_dir(), Path)
         assert isinstance(get_screenshots_dir(), Path)
 
         # 验证路径层级关系
@@ -137,3 +133,5 @@ class TestCore:
         from maa_mcp.main import mcp
 
         assert mcp is not None
+
+

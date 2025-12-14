@@ -10,16 +10,17 @@ from fastmcp import FastMCP
 
 from maa_mcp import __version__
 from maa_mcp.registry import ObjectRegistry
-from maa_mcp.paths import get_config_dir, ensure_dirs
+from maa_mcp.paths import get_data_dir, ensure_dirs
 
 
 # 确保所有必要的目录存在并初始化 MaaFramework
 ensure_dirs()
-Toolkit.init_option(get_config_dir())
+Toolkit.init_option(get_data_dir(), {"stdout_level": 0})
 
 
 class ControllerType(Enum):
     """控制器类型枚举"""
+
     ADB = auto()
     WIN32 = auto()
 
@@ -27,6 +28,7 @@ class ControllerType(Enum):
 @dataclass
 class ControllerInfo:
     """控制器信息，用于记录控制器类型和配置"""
+
     controller_type: ControllerType
     # Win32 专用：键盘输入方式
     keyboard_method: Optional[str] = None

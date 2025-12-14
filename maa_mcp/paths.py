@@ -6,6 +6,7 @@
 - macOS: ~/Library/Application Support/MaaMCP/
 - Linux: ~/.local/share/MaaMCP/
 """
+
 from pathlib import Path
 
 from platformdirs import user_data_dir
@@ -19,7 +20,7 @@ APP_AUTHOR = "MaaXYZ"
 def get_data_dir() -> Path:
     """
     获取应用数据目录
-    
+
     Returns:
         跨平台的用户数据目录路径
     """
@@ -29,7 +30,7 @@ def get_data_dir() -> Path:
 def get_resource_dir() -> Path:
     """
     获取资源目录路径
-    
+
     Returns:
         资源目录路径 (data_dir/resource)
     """
@@ -39,7 +40,7 @@ def get_resource_dir() -> Path:
 def get_model_dir() -> Path:
     """
     获取模型目录路径
-    
+
     Returns:
         模型目录路径 (data_dir/resource/model)
     """
@@ -49,37 +50,17 @@ def get_model_dir() -> Path:
 def get_ocr_dir() -> Path:
     """
     获取 OCR 模型目录路径
-    
+
     Returns:
         OCR 模型目录路径 (data_dir/resource/model/ocr)
     """
     return get_model_dir() / "ocr"
 
 
-def get_config_dir() -> Path:
-    """
-    获取配置目录路径
-    
-    Returns:
-        配置目录路径 (data_dir/config)
-    """
-    return get_data_dir() / "config"
-
-
-def get_debug_dir() -> Path:
-    """
-    获取调试目录路径
-    
-    Returns:
-        调试目录路径 (data_dir/debug)
-    """
-    return get_data_dir() / "debug"
-
-
 def get_screenshots_dir() -> Path:
     """
     获取截图目录路径
-    
+
     Returns:
         截图目录路径 (data_dir/screenshots)
     """
@@ -94,10 +75,7 @@ def ensure_dirs() -> None:
         get_resource_dir(),
         get_model_dir(),
         get_ocr_dir(),
-        get_config_dir(),
-        get_debug_dir(),
         get_screenshots_dir(),
     ]
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)
-
