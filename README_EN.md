@@ -89,9 +89,9 @@ pip install maa-mcp
     pip install -e .
     ```
 
-### Configure MCP Clients
+### Configure Clients
 
-Add MCP configuration:
+Add an MCP server to software such as Cursor:
 
 ```json
 {
@@ -101,6 +101,14 @@ Add MCP configuration:
     }
   }
 }
+```
+
+OR
+
+Add an MCP command to software such as Cherry Studio:
+
+```shell
+maa-mcp
 ```
 
 ## Usage Examples

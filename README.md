@@ -89,9 +89,9 @@ pip install maa-mcp
     pip install -e .
     ```
 
-### 配置 MCP 客户端
+### 配置客户端
 
-添加 MCP 配置：
+在 Cursor 等软件中，添加 MCP 服务器：
 
 ```json
 {
@@ -101,6 +101,14 @@ pip install maa-mcp
     }
   }
 }
+```
+
+或
+
+在 Cherry Studio 等软件中，添加 MCP 命令：
+
+```shell
+maa-mcp
 ```
 
 ## 使用示例
