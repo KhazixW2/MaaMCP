@@ -30,6 +30,8 @@ class ControllerInfo:
     """控制器信息，用于记录控制器类型和配置"""
 
     controller_type: ControllerType
+    # 连接参数，用于在子进程中重建控制器
+    connection_params: dict
     # Win32 专用：键盘输入方式
     keyboard_method: Optional[str] = None
 
