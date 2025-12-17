@@ -10,15 +10,168 @@ from maa_mcp.core import controller_info_registry, ControllerType
 from maa_mcp.adb import find_adb_device_list, connect_adb_device
 from maa_mcp.win32 import find_window_list, connect_window
 
-# 尝试不同的导入方式，确保在直接运行和作为模块运行时都能工作
-try:
-    from tests.test_performance import PerformanceTimer, PerformanceBenchmarker
-except ImportError:
-    import sys
-    import os
 
-    sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-    from test_performance import PerformanceTimer, PerformanceBenchmarker
+class PerformanceTimer:
+    """性能计时器，用于测量函数执行时间"""
+
+    def __init__(self):
+        self.start_time: Optional[float] = None
+        self.end_time: Optional[float] = None
+        self.elapsed_time: Optional[float] = None
+
+    def start(self):
+        """开始计时"""
+        self.start_time = time.perf_counter()
+        self.end_time = None
+        self.elapsed_time = None
+
+    def stop(self):
+        """停止计时"""
+        if self.start_time is not None:
+            self.end_time = time.perf_counter()
+            self.elapsed_time = self.end_time - self.start_time
+
+    def __enter__(self):
+        """上下文管理器入口"""
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """上下文管理器出口"""
+        self.stop()
+
+
+class PerformanceTestResult:
+    """性能测试结果类"""
+
+    def __init__(
+        self,
+        function_name: str,
+        execution_time: float,
+        success: bool,
+        result: Any = None,
+    ):
+        self.function_name = function_name
+        self.execution_time = execution_time
+        self.success = success
+        self.result = result
+
+    def __str__(self):
+        status = "成功" if self.success else "失败"
+        return f"{self.function_name} - {status}, 耗时: {self.execution_time:.4f}秒"
+
+
+class PerformanceBenchmarker:
+    """性能基准测试工具，用于批量测试函数性能"""
+
+    def __init__(self):
+        self.results: List[PerformanceTestResult] = []
+
+    def benchmark(self, func: Callable, *args, **kwargs) -> PerformanceTestResult:
+        """执行单次性能测试"""
+        timer = PerformanceTimer()
+        success = False
+        result = None
+
+        try:
+            timer.start()
+            result = func(*args, **kwargs)
+            timer.stop()
+            success = True
+        except Exception as e:
+            timer.stop()
+            print(f"[Error] {func.__name__} 执行失败: {e}")
+
+        test_result = PerformanceTestResult(
+            function_name=func.__name__,
+            execution_time=timer.elapsed_time or 0,
+            success=success,
+            result=result,
+        )
+
+        self.results.append(test_result)
+        return test_result
+
+    def run_multiple(
+        self,
+        func: Callable,
+        iterations: int = 5,
+        print_stats: bool = True,
+        *args,
+        **kwargs,
+    ) -> List[PerformanceTestResult]:
+        """多次执行性能测试，获取平均时间"""
+        test_results = []
+
+        total_start_time = time.perf_counter()
+        last_print_time = 0
+
+        for i in range(iterations):
+            # 使用\r实现同一行滚动显示进度，限制刷新频率避免拖慢速度
+            current_time = time.perf_counter()
+            if iterations > 1 and print_stats:
+                # 每0.1秒或最后一次才刷新
+                if current_time - last_print_time > 0.1 or i == iterations - 1:
+                    print(
+                        f"\r[Iteration {i+1}/{iterations}] - 进行中...",
+                        end="",
+                        flush=True,
+                    )
+                    last_print_time = current_time
+
+            result = self.benchmark(func, *args, **kwargs)
+            test_results.append(result)
+
+        total_end_time = time.perf_counter()
+        total_wall_time = total_end_time - total_start_time
+
+        # 完成后换行
+        if iterations > 1 and print_stats:
+            print()
+
+        # 计算统计信息
+        if test_results and print_stats:
+            success_times = [r.execution_time for r in test_results if r.success]
+            if success_times:
+                avg_time = sum(success_times) / len(success_times)
+                max_time = max(success_times)
+                min_time = min(success_times)
+                total_execution_time = sum(success_times)
+
+                print(f"\n[Statistics] {func.__name__}")
+                print(f"  平均时间: {avg_time:.4f} 秒")
+                print(f"  最大时间: {max_time:.4f} 秒")
+                print(f"  最小时间: {min_time:.4f} 秒")
+                print(f"  成功率: {len(success_times)}/{iterations}")
+                print(f"  总执行耗时 (Sum): {total_execution_time:.4f} 秒")
+                print(f"  总墙钟耗时 (Wall): {total_wall_time:.4f} 秒")
+                if total_wall_time > total_execution_time * 1.1:
+                    print(f"  注意: 墙钟时间显著大于执行时间，可能存在系统开销或IO等待")
+
+        return test_results
+
+    def print_summary(self):
+        """打印所有测试结果摘要"""
+        print("\n" + "=" * 50)
+        print("性能测试结果摘要")
+        print("=" * 50)
+
+        for result in self.results:
+            print(result)
+
+        # 统计总览
+        total_tests = len(self.results)
+        successful_tests = sum(1 for r in self.results if r.success)
+        avg_time_all = (
+            sum(r.execution_time for r in self.results if r.success) / successful_tests
+            if successful_tests
+            else 0
+        )
+
+        print(f"\n总览: {successful_tests}/{total_tests} 个测试成功")
+        if successful_tests:
+            print(f"平均执行时间: {avg_time_all:.4f} 秒")
+        print("=" * 50)
 
 
 class StressTestConfig:
