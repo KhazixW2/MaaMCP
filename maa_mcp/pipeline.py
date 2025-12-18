@@ -22,7 +22,7 @@ from maa_mcp.resource import get_or_create_resource, get_or_create_tasker
 
 
 # Pipeline 协议文档（精简版，包含 AI 生成 Pipeline 所需的关键信息）
-PIPELINE_DOCUMENTATION = '''
+PIPELINE_DOCUMENTATION = """
 # MaaFramework Pipeline 协议文档
 
 ## 概述
@@ -235,21 +235,7 @@ Pipeline 是 MaaFramework 的任务流水线，采用 JSON 格式描述，由若
 5. **处理等待场景**：如果需要等待页面加载，可以增加 post_delay 或使用中间节点检测加载完成。
 
 6. **链式结构**：确保 next 字段正确链接，形成完整的执行流程。
-'''
-
-
 """
-MPE 相关配置
-"""
-
-# MPE 分享协议版本
-MPE_SHARE_VERSION = 1
-# URL 参数名
-MPE_SHARE_PARAM = "shared"
-# 默认 MPE 基准地址
-MPE_BASE_URL = "https://mpe.codax.site/stable"
-# URL 最大大小限制
-MPE_MAX_URL_SIZE = 60 * 1024  # 60KB
 
 
 @mcp.tool(
@@ -348,7 +334,9 @@ def save_pipeline(
 
     # 验证 Pipeline 结构：必须是以节点名为键的非空对象
     if not isinstance(pipeline, dict):
-        return "Pipeline JSON 结构错误: 顶层必须是对象（以节点名为键），而不是数组或原始值"
+        return (
+            "Pipeline JSON 结构错误: 顶层必须是对象（以节点名为键），而不是数组或原始值"
+        )
 
     if not pipeline:
         return "Pipeline JSON 结构错误: 对象不能为空，至少需要包含一个节点配置"
@@ -463,11 +451,21 @@ def run_pipeline(
     return task_detail
 
 
+"""
+MPE 相关配置
+"""
+
+# MPE 分享协议版本
+MPE_SHARE_VERSION = 1
+# URL 参数名
+MPE_SHARE_PARAM = "shared"
+# 默认 MPE 基准地址
+MPE_BASE_URL = "https://mpe.codax.site/stable"
+# URL 最大大小限制
+MPE_MAX_URL_SIZE = 60 * 1024  # 60KB
 
 
-def generate_share_link(
-    pipeline_obj: dict
-) -> str:
+def generate_share_link(pipeline_obj: dict) -> str:
     # 生成分享链接
     payload = {
         "v": MPE_SHARE_VERSION,
@@ -499,9 +497,7 @@ def generate_share_link(
     - 如果生成的 URL 超过 60KB，将返回错误提示而不打开浏览器
     """,
 )
-def open_pipeline_in_browser(
-    pipeline_file_path: str
-) -> None:
+def open_pipeline_in_browser(pipeline_file_path: str) -> None:
     # 读取文件内容
     file_path = Path(pipeline_file_path)
 
