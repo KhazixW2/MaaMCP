@@ -514,7 +514,7 @@ def open_pipeline_in_browser(
         pipeline_obj = json.load(f)
 
     # 生成分享链接
-    share_url = generate_share_link(pipeline_obj, base_url)
+    share_url = generate_share_link(pipeline_obj)
 
     # 检查 URL 大小
     url_size = len(share_url.encode("utf-8"))
