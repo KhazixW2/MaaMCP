@@ -2,7 +2,7 @@ import atexit
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from maa.toolkit import Toolkit
 
@@ -31,7 +31,7 @@ class ControllerInfo:
 
     controller_type: ControllerType
     # 连接参数，用于在子进程中重建控制器
-    connection_params: dict
+    connection_params: Dict[str, Any]
     # Win32 专用：键盘输入方式
     keyboard_method: Optional[str] = None
 
