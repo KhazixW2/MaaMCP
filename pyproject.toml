@@ -45,11 +45,8 @@ dependencies = [
     "fastmcp>=2.0.0",
     "opencv-python>=4.0.0",
     "platformdirs>=4.0.0",
-<<<<<<< HEAD
     "loguru>=0.7.0",
-=======
     "lzstring>=1.0.4",
->>>>>>> upstream/main
 ]
 
 [project.urls]
