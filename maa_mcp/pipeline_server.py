@@ -26,12 +26,29 @@ import maa_mcp.utils
 import maa_mcp.resource
 
 # 导入 Pipeline 子模块
+from dataclasses import dataclass
+
 from maa_mcp.pipeline import (
     setup_logger,
     get_logger,
     PipelineState,
     get_pipeline_state,
 )
+
+
+# 流水线配置类
+@dataclass
+class PipelineConfig:
+    """流水线配置"""
+
+    screenshot_fps: float = 2.0  # 截图帧率
+    message_queue_size: int = 100  # 消息队列大小
+    similarity_threshold: int = 5  # 图像相似度阈值
+    enable_dedup: bool = True  # 启用消息去重
+
+
+# UI 元素过滤列表（用于消息去重时过滤 UI 文本）
+UI_ELEMENTS_FILTER = {"微信", "发送", "输入", "语音", "表情", "更多"}
 
 # 导入现有的工具实现函数（内部函数，可直接调用）
 from maa_mcp.vision import _screencap as mcp_screencap
@@ -53,10 +70,10 @@ def run_pipeline_loop(
 ):
     """
     流水线主循环（多线程版）
-    
+
     不再执行 OCR，而是直接截图并缓存图片路径到队列中。
     大模型获取图片路径后可自行决定是否需要 OCR 以及具体操作。
-    
+
     Args:
         controller_id: 控制器 ID
         config_dict: 配置字典
@@ -64,7 +81,7 @@ def run_pipeline_loop(
         message_queue: 消息队列（存放截图路径）
     """
     thread_logger = get_logger("PipelineLoop")
-    
+
     thread_logger.debug(f"[初始化] 流水线线程启动")
     thread_logger.debug(f"[初始化] controller_id={controller_id}")
     thread_logger.info(f"流水线线程启动，控制器: {controller_id}")
@@ -72,7 +89,7 @@ def run_pipeline_loop(
     fps = config_dict.get("fps", 2.0)
     frame_count = 0
     interval = 1.0 / fps
-    
+
     thread_logger.debug(f"[初始化] fps={fps}, interval={interval}s")
     thread_logger.info("流水线初始化完成，开始主循环（截图模式）")
 
@@ -80,18 +97,18 @@ def run_pipeline_loop(
         try:
             loop_start = time.time()
             frame_count += 1
-            
+
             thread_logger.debug(f"[Frame {frame_count}] 开始截图...")
 
             # 直接调用 vision.py 中的 screencap 函数，获取截图路径
             screenshot_path = mcp_screencap(controller_id)
-            
+
             # 处理截图返回值
             if screenshot_path is None:
                 thread_logger.debug(f"[Frame {frame_count}] 截图失败: None")
                 time.sleep(interval)
                 continue
-            
+
             thread_logger.debug(f"[Frame {frame_count}] 截图成功: {screenshot_path}")
 
             # 将截图路径放入消息队列
@@ -115,6 +132,7 @@ def run_pipeline_loop(
         except Exception as e:
             thread_logger.error(f"流水线异常: {e}")
             import traceback
+
             thread_logger.debug(f"堆栈: {traceback.format_exc()}")
             time.sleep(1)
 
@@ -127,10 +145,12 @@ def run_pipeline_loop(
 def _start_pipeline_impl(controller_id: str, fps: float = 2.0) -> str:
     """启动流水线实现"""
     try:
-        logger.debug(f"[启动] 收到启动流水线请求: controller_id={controller_id}, fps={fps}")
-        
+        logger.debug(
+            f"[启动] 收到启动流水线请求: controller_id={controller_id}, fps={fps}"
+        )
+
         pipeline_state = get_pipeline_state()
-        
+
         if pipeline_state.is_running:
             return "⚠️ 流水线已经在运行中"
 
@@ -161,10 +181,10 @@ def _start_pipeline_impl(controller_id: str, fps: float = 2.0) -> str:
             daemon=True,
             name=f"PipelineThread-{controller_id}",
         )
-        
+
         pipeline_state.pipeline_thread.start()
         pipeline_state.is_running = True
-        
+
         logger.info(f"流水线已启动, Thread={pipeline_state.pipeline_thread.name}")
 
         return f"✅ 流水线已启动 (Thread: {pipeline_state.pipeline_thread.name})"

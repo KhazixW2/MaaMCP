@@ -26,41 +26,28 @@ def setup_logger(
 ) -> None:
     """
     配置 loguru 日志系统。
-    
+
+    注意：默认只输出日志到文件，不输出到控制台。
+    如果需要临时启用控制台输出，可以取消注释函数内部的控制台输出配置代码。
+
     Args:
-        console_level: 控制台日志级别
+        console_level: 控制台日志级别（当前未使用）
         file_level: 文件日志级别
         error_retention: 错误日志保留时间
         log_retention: 普通日志保留时间
     """
     global _initialized
-    
+
     if _initialized:
         return
-    
+
     # 获取日志目录
     logs_dir = get_logs_dir()
     logs_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # 移除默认 handler
     logger.remove()
-    
-    # 添加控制台输出
-    logger.add(
-        sys.stderr,
-        format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{extra[module]}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-        level=console_level,
-        filter=lambda record: "module" in record["extra"],
-    )
-    
-    # 为没有 module 的日志添加默认格式
-    logger.add(
-        sys.stderr,
-        format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-        level=console_level,
-        filter=lambda record: "module" not in record["extra"],
-    )
-    
+
     # 添加文件输出 - 按日期轮转
     logger.add(
         logs_dir / "pipeline_{time:YYYY-MM-DD}.log",
@@ -71,7 +58,7 @@ def setup_logger(
         compression="zip",  # 压缩旧日志
         encoding="utf-8",
     )
-    
+
     # 添加错误日志单独文件
     logger.add(
         logs_dir / "pipeline_error_{time:YYYY-MM-DD}.log",
@@ -82,7 +69,7 @@ def setup_logger(
         compression="zip",
         encoding="utf-8",
     )
-    
+
     _initialized = True
     logger.bind(module="Logger").info(f"日志系统初始化完成，日志目录: {logs_dir}")
 
@@ -90,17 +77,17 @@ def setup_logger(
 def get_logger(module: str = "Pipeline"):
     """
     获取带模块标识的 logger。
-    
+
     Args:
         module: 模块名称标识
-        
+
     Returns:
         绑定了模块名的 logger 实例
     """
     # 确保已初始化
     if not _initialized:
         setup_logger()
-    
+
     return logger.bind(module=module)
 
 
