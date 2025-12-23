@@ -170,7 +170,7 @@ If you want AI to complete automation tasks quickly and efficiently without seei
 
 ### Performance Recommendations
 
-For the fastest running speed, it is recommended to use **Flash version** of large language models (such as Claude 3 Flash), which can significantly improve response speed while maintaining high intelligence levels.
+For the fastest running speed, it is recommended to use the **Flash version** of a large language model (such as Claude 3 Flash), which can significantly improve response speed while maintaining high intelligence levels.
 
 ## Workflow
 
