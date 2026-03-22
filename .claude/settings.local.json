@@ -1,12 +1,27 @@
 {
-    "mcpServers": {
-        "MaaMCP": {
-            "command": "python",
-            "args": [
-                "-m",
-                "maa_mcp"
-            ],
-            "cwd": "${workspaceFolder}"
-        }
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import maa_mcp.pipeline_server\")",
+      "mcp__maa-*",
+      "mcp__maa-mcp__ocr",
+      "mcp__maa-mcp__click",
+      "mcp__maa-mcp__wait",
+      "mcp__maa-mcp__click_key"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "maa-mcp"
+  ],
+  "mcpServers": {
+    "MaaMCP": {
+      "command": "python",
+      "args": [
+        "-m",
+        "maa_mcp"
+      ],
+      "cwd": "${workspaceFolder}"
     }
+  }
 }

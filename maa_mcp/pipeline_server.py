@@ -51,7 +51,7 @@ class PipelineConfig:
 UI_ELEMENTS_FILTER = {"微信", "发送", "输入", "语音", "表情", "更多"}
 
 # 导入现有的工具实现函数（内部函数，可直接调用）
-from maa_mcp.vision import _screencap as mcp_screencap
+from maa_mcp.vision import _ocr_impl
 
 # ==================== 初始化日志 ====================
 
@@ -71,14 +71,14 @@ def run_pipeline_loop(
     """
     流水线主循环（多线程版）
 
-    不再执行 OCR，而是直接截图并缓存图片路径到队列中。
-    大模型获取图片路径后可自行决定是否需要 OCR 以及具体操作。
+    后台线程持续截图并执行 OCR，将 OCR 文字结果传递给大模型。
+    大模型直接使用文字结果进行决策，无需处理图片。
 
     Args:
         controller_id: 控制器 ID
         config_dict: 配置字典
         stop_event: 停止事件
-        message_queue: 消息队列（存放截图路径）
+        message_queue: 消息队列（存放 OCR 结果）
     """
     thread_logger = get_logger("PipelineLoop")
 
@@ -91,38 +91,38 @@ def run_pipeline_loop(
     interval = 1.0 / fps
 
     thread_logger.debug(f"[初始化] fps={fps}, interval={interval}s")
-    thread_logger.info("流水线初始化完成，开始主循环（截图模式）")
+    thread_logger.info("流水线初始化完成，开始主循环（OCR 模式）")
 
     while not stop_event.is_set():
         try:
             loop_start = time.time()
             frame_count += 1
 
-            thread_logger.debug(f"[Frame {frame_count}] 开始截图...")
+            thread_logger.debug(f"[Frame {frame_count}] 开始 OCR...")
 
-            # 直接调用 vision.py 中的 screencap 函数，获取截图路径
-            screenshot_path = mcp_screencap(controller_id)
+            # 调用 vision.py 中的 _ocr_impl，执行截图+OCR
+            ocr_results = _ocr_impl(controller_id)
 
-            # 处理截图返回值
-            if screenshot_path is None:
-                thread_logger.debug(f"[Frame {frame_count}] 截图失败: None")
+            # 处理 OCR 返回值
+            if ocr_results is None:
+                thread_logger.debug(f"[Frame {frame_count}] OCR 失败: None")
                 time.sleep(interval)
                 continue
 
-            thread_logger.debug(f"[Frame {frame_count}] 截图成功: {screenshot_path}")
+            thread_logger.debug(f"[Frame {frame_count}] OCR 成功，结果条数: {len(ocr_results) if isinstance(ocr_results, list) else 0}")
 
-            # 将截图路径放入消息队列
+            # 将 OCR 结果放入消息队列
             message_data = {
-                "type": "screenshot",
-                "image_path": screenshot_path,
+                "type": "ocr",
+                "ocr_results": ocr_results,
                 "timestamp": time.time(),
                 "frame_id": frame_count,
             }
             try:
                 message_queue.put_nowait(message_data)
-                thread_logger.info(f"📷 新截图: {screenshot_path}")
+                thread_logger.info(f"📷 OCR 结果: {len(ocr_results) if isinstance(ocr_results, list) else 0} 条")
             except:
-                thread_logger.warning(f"[Frame {frame_count}] 消息队列已满，丢弃截图")
+                thread_logger.warning(f"[Frame {frame_count}] 消息队列已满，丢弃 OCR 结果")
 
             elapsed = time.time() - loop_start
             sleep_time = max(0, interval - elapsed)
@@ -241,20 +241,19 @@ def _get_pipeline_status_impl() -> Dict[str, Any]:
 @mcp.tool(
     name="start_pipeline",
     description="""
-    启动后台监控流水线，持续对设备屏幕进行截图并缓存图片路径。
+    启动后台监控流水线，持续对设备屏幕进行截图+OCR 并缓存 OCR 结果。
 
     参数：
     - controller_id: 控制器 ID，由 connect_adb_device() 或 connect_window() 返回
-    - fps: 截图帧率（默认 2.0），控制每秒截图次数
+    - fps: 截图帧率（默认 2.0），控制每秒 OCR 次数
 
     返回值：
     - 成功：返回包含 "✅" 的成功信息
     - 失败：返回包含 "❌" 的错误信息
 
     说明：
-    流水线启动后会在后台线程持续运行，定期截图并将图片路径放入消息队列。
-    可通过 get_new_messages() 获取截图路径，然后读取图片内容进行分析。
-    大模型可根据图片内容自行决定是否需要 OCR、具体 OCR 哪个区域、点击哪里等操作。
+    流水线启动后会在后台线程持续运行，定期截图并执行 OCR，将 OCR 结果放入消息队列。
+    可通过 get_new_messages() 获取 OCR 结果，大模型直接使用文字结果进行决策。
     同一时间只能运行一个流水线实例。
     """,
 )
@@ -285,27 +284,27 @@ def stop_pipeline() -> str:
 @mcp.tool(
     name="get_new_messages",
     description="""
-    获取流水线缓存的新截图路径（非阻塞）。
+    获取流水线缓存的最新 OCR 结果（非阻塞）。
 
     参数：
-    - max_count: 最大获取数量（默认 10），控制单次调用返回的截图数量上限
+    - max_count: 最大获取数量（默认 10），控制单次调用返回的消息数量上限
 
     返回值：
     - 成功：返回消息列表，每条消息包含以下字段：
-      - type: 消息类型，固定为 "screenshot"
-      - image_path: 截图文件的绝对路径，可通过读取该路径获取图片内容
-      - timestamp: 截图时间戳
+      - type: 消息类型，固定为 "ocr"
+      - ocr_results: OCR 识别结果列表，包含文字、坐标、置信度等信息
+      - timestamp: OCR 时间戳
       - frame_id: 帧序号
     - 无新消息：返回空列表 []
 
     说明：
-    此方法为非阻塞调用，立即返回当前队列中的截图路径。
+    此方法为非阻塞调用，立即返回当前队列中的 OCR 结果。
     获取后的消息会从队列中移除，不会重复返回。
-    
+
     建议用法：
-    1. 获取 image_path 后，读取图片内容进行视觉分析
-    2. 根据图片内容判断是否需要执行 OCR（调用 ocr 工具）
-    3. 根据分析结果决定具体的点击位置或其他操作
+    1. 获取 ocr_results 后，直接使用文字结果进行分析决策
+    2. 根据 OCR 结果中的坐标信息执行点击、滑动等操作
+    3. 无需再调用 ocr() 工具，直接使用队列中的结果即可
     """,
 )
 def get_new_messages(max_count: int = 10) -> List[Dict[str, Any]]:
