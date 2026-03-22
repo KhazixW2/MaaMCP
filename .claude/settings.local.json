@@ -6,7 +6,10 @@
       "mcp__maa-mcp__ocr",
       "mcp__maa-mcp__click",
       "mcp__maa-mcp__wait",
-      "mcp__maa-mcp__click_key"
+      "mcp__maa-mcp__click_key",
+      "mcp__maa-mcp__connect_adb_device",
+      "mcp__maa-mcp__swipe",
+      "mcp__maa-mcp__find_adb_device_list"
     ],
     "defaultMode": "bypassPermissions"
   },
