@@ -67,7 +67,7 @@ Talk is cheap, see: **[🎞️ Bilibili Video Demo](https://www.bilibili.com/vid
 
 ### ⚡ Pipeline Mode (Multi-threaded Background Monitoring)
 
-- `start_pipeline` - Start background monitoring pipeline, continuously screenshots and caches image paths
+- `start_pipeline` - Start background monitoring pipeline, continuously captures screenshots and caches image paths
 - `stop_pipeline` - Stop pipeline
 - `get_new_messages` - Get new screenshot paths cached by pipeline
 - `get_pipeline_status` - Get pipeline running status
