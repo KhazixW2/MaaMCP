@@ -11,6 +11,15 @@ from maa_mcp.adb import find_adb_device_list, connect_adb_device
 from maa_mcp.win32 import find_window_list, connect_window
 
 
+def _call_tool(func, *args, **kwargs):
+    """兼容模式：调用工具函数，自动处理 FunctionTool 和普通函数"""
+    # 如果 func 有 .fn 属性，说明是 FunctionTool，使用 .fn() 调用
+    if hasattr(func, 'fn'):
+        return func.fn(*args, **kwargs)
+    # 否则直接调用
+    return func(*args, **kwargs)
+
+
 class PerformanceTimer:
     """性能计时器，用于测量函数执行时间"""
 
@@ -75,15 +84,19 @@ class PerformanceBenchmarker:
 
         try:
             timer.start()
-            result = func(*args, **kwargs)
+            # 兼容 FunctionTool 和普通函数
+            result = _call_tool(func, *args, **kwargs)
             timer.stop()
             success = True
         except Exception as e:
             timer.stop()
-            print(f"[Error] {func.__name__} 执行失败: {e}")
+            print(f"[Error] {getattr(func, '__name__', str(func))} 执行失败: {e}")
+
+        # 获取函数名：优先使用 __name__，FunctionTool 使用 name 属性
+        func_name = getattr(func, '__name__', None) or getattr(func, 'name', str(func))
 
         test_result = PerformanceTestResult(
-            function_name=func.__name__,
+            function_name=func_name,
             execution_time=timer.elapsed_time or 0,
             success=success,
             result=result,
@@ -256,10 +269,10 @@ class TestStressPerformance:
 
         # 尝试获取ADB设备
         try:
-            device_list = find_adb_device_list.fn()
+            device_list = _call_tool(find_adb_device_list)
             if device_list:
                 self.device_name = device_list[0]  # 使用第一个设备
-                self.controller_id = connect_adb_device.fn(self.device_name)
+                self.controller_id = _call_tool(connect_adb_device, self.device_name)
                 print(
                     f"  使用ADB设备: {self.device_name}, 控制器ID: {self.controller_id}"
                 )
@@ -269,10 +282,10 @@ class TestStressPerformance:
         # 如果没有ADB设备，尝试获取Windows窗口
         if not self.controller_id:
             try:
-                window_list = find_window_list.fn()
+                window_list = _call_tool(find_window_list)
                 if window_list:
                     self.window_name = window_list[0]  # 使用第一个窗口
-                    self.controller_id = connect_window.fn(self.window_name)
+                    self.controller_id = _call_tool(connect_window, self.window_name)
                     print(
                         f"  使用Windows窗口: {self.window_name}, 控制器ID: {self.controller_id}"
                     )
@@ -289,11 +302,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            find_adb_device_list.fn()
+            _call_tool(find_adb_device_list)
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            find_adb_device_list.fn,
+            find_adb_device_list,
             iterations=self.config.iterations,
             print_stats=False,
         )
@@ -307,11 +320,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            find_window_list.fn()
+            _call_tool(find_window_list)
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            find_window_list.fn,
+            find_window_list,
             iterations=self.config.iterations,
             print_stats=False,
         )
@@ -329,11 +342,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            ocr.fn(self.controller_id)
+            _call_tool(ocr, self.controller_id)
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            ocr.fn,
+            ocr,
             iterations=self.config.iterations,
             print_stats=False,
             controller_id=self.controller_id,
@@ -352,11 +365,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            screencap.fn(self.controller_id)
+            _call_tool(screencap, self.controller_id)
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            screencap.fn,
+            screencap,
             iterations=self.config.iterations,
             print_stats=False,
             controller_id=self.controller_id,
@@ -375,11 +388,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            click.fn(self.controller_id, 100, 100)
+            _call_tool(click, self.controller_id, 100, 100)
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            click.fn,
+            click,
             iterations=self.config.iterations,
             print_stats=False,
             controller_id=self.controller_id,
@@ -400,11 +413,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            swipe.fn(self.controller_id, 100, 100, 200, 200, 500)
+            _call_tool(swipe, self.controller_id, 100, 100, 200, 200, 500)
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            swipe.fn,
+            swipe,
             iterations=self.config.iterations,
             print_stats=False,
             controller_id=self.controller_id,
@@ -428,11 +441,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            input_text.fn(self.controller_id, "test")
+            _call_tool(input_text, self.controller_id, "test")
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            input_text.fn,
+            input_text,
             iterations=self.config.iterations,
             print_stats=False,
             controller_id=self.controller_id,
@@ -452,11 +465,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            click_key.fn(self.controller_id, 13)  # 13 是回车键的虚拟键码
+            _call_tool(click_key, self.controller_id, 13)  # 13 是回车键的虚拟键码
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            click_key.fn,
+            click_key,
             iterations=self.config.iterations,
             print_stats=False,
             controller_id=self.controller_id,
@@ -482,11 +495,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            scroll.fn(self.controller_id, 0, -120)
+            _call_tool(scroll, self.controller_id, 0, -120)
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            scroll.fn,
+            scroll,
             iterations=self.config.iterations,
             print_stats=False,
             controller_id=self.controller_id,
@@ -507,11 +520,11 @@ class TestStressPerformance:
 
         # 预热
         for _ in range(self.config.warmup_iterations):
-            double_click.fn(self.controller_id, 100, 100)
+            _call_tool(double_click, self.controller_id, 100, 100)
 
         # 执行压力测试
         results = self.benchmarker.run_multiple(
-            double_click.fn,
+            double_click,
             iterations=self.config.iterations,
             print_stats=False,
             controller_id=self.controller_id,
