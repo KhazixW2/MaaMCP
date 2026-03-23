@@ -19,7 +19,6 @@ _initialized = False
 
 
 def setup_logger(
-    console_level: str = "INFO",
     file_level: str = "DEBUG",
     error_retention: str = "30 days",
     log_retention: str = "7 days",
@@ -31,7 +30,6 @@ def setup_logger(
     如果需要临时启用控制台输出，可以取消注释函数内部的控制台输出配置代码。
 
     Args:
-        console_level: 控制台日志级别（当前未使用）
         file_level: 文件日志级别
         error_retention: 错误日志保留时间
         log_retention: 普通日志保留时间

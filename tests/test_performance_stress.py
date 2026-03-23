@@ -191,69 +191,8 @@ class StressTestConfig:
     """压力测试配置类"""
 
     def __init__(self):
-        self.iterations = 10  # 默认执行1000次
+        self.iterations = 10  # 默认执行次数
         self.warmup_iterations = 10  # 预热迭代次数
-        self.timeout = 30.0  # 单个测试超时时间（秒）
-
-
-class MockController:
-    """模拟控制器类，用于模拟设备/窗口控制器的基本功能"""
-
-    def __init__(self):
-        self.controller_id = "mock_controller"
-
-    def post_screencap(self):
-        """模拟截图操作"""
-        time.sleep(0.001)  # 模拟截图延迟
-        return self
-
-    def wait(self):
-        """模拟等待操作"""
-        return self
-
-    def get(self):
-        """模拟获取结果"""
-        return b"mock_image_data"  # 返回模拟的图片数据
-
-    def post_touch_down(self, x, y, contact=0):
-        """模拟触摸按下操作"""
-        time.sleep(0.001)
-        return self
-
-    def post_touch_up(self, contact=0):
-        """模拟触摸抬起操作"""
-        time.sleep(0.001)
-        return self
-
-    def post_swipe(self, start_x, start_y, end_x, end_y, duration):
-        """模拟滑动操作"""
-        time.sleep(duration / 1000.0 * 0.1)  # 模拟滑动延迟，实际时间的1/10
-        return self
-
-    def post_input_text(self, text):
-        """模拟输入文本操作"""
-        time.sleep(len(text) * 0.0005)  # 模拟输入每个字符的延迟
-        return self
-
-    def post_key_down(self, key):
-        """模拟按键按下操作"""
-        time.sleep(0.001)
-        return self
-
-    def post_key_up(self, key):
-        """模拟按键抬起操作"""
-        time.sleep(0.001)
-        return self
-
-    def post_scroll(self, x, y):
-        """模拟滚动操作"""
-        time.sleep(0.001)
-        return self
-
-    @property
-    def succeeded(self):
-        """模拟操作成功状态"""
-        return True
 
 
 class TestStressPerformance:
@@ -292,9 +231,9 @@ class TestStressPerformance:
             except Exception as e:
                 print(f"  获取Windows窗口失败: {e}")
 
-        # 如果仍然没有控制器，将使用模拟数据
+        # 如果仍然没有控制器，跳过测试类
         if not self.controller_id:
-            print("  未找到实际设备或窗口，部分测试将使用模拟数据")
+            pytest.skip("未检测到可用的真实控制器设备/窗口，跳过压力性能测试")
 
     def test_stress_find_adb_device_list(self):
         """压力测试 - find_adb_device_list 函数"""
@@ -337,8 +276,7 @@ class TestStressPerformance:
         print(f"\n=== 压力测试: ocr ({self.config.iterations}次) ===")
 
         if not self.controller_id:
-            print("  没有有效的控制器ID，无法执行OCR测试")
-            return
+            pytest.skip("未检测到可用控制器")
 
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -355,13 +293,25 @@ class TestStressPerformance:
         # 打印详细统计信息
         self._print_stress_test_stats(results, "ocr")
 
+        # 轻量级断言
+        assert results, "OCR 压力测试没有产生任何结果"
+        successes = [r for r in results if r.success]
+        success_ratio = len(successes) / len(results)
+        assert success_ratio >= 0.8, f"OCR 成功率过低: {success_ratio:.2%}"
+
+        durations_ms = [r.execution_time * 1000 for r in successes]
+        if durations_ms:
+            avg_duration = sum(durations_ms) / len(durations_ms)
+            max_duration = max(durations_ms)
+            assert max_duration < 5000, f"OCR 单次调用耗时过长: {max_duration:.1f} ms"
+            assert avg_duration < 3000, f"OCR 平均耗时过长: {avg_duration:.1f} ms"
+
     def test_stress_screencap(self):
         """压力测试 - 截图函数"""
         print(f"\n=== 压力测试: screencap ({self.config.iterations}次) ===")
 
         if not self.controller_id:
-            print("  没有有效的控制器ID，无法执行截图测试")
-            return
+            pytest.skip("未检测到可用控制器")
 
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -378,13 +328,18 @@ class TestStressPerformance:
         # 打印详细统计信息
         self._print_stress_test_stats(results, "screencap")
 
+        # 轻量级断言
+        assert results, "截图压力测试没有产生任何结果"
+        successes = [r for r in results if r.success]
+        success_ratio = len(successes) / len(results)
+        assert success_ratio >= 0.8, f"截图成功率过低: {success_ratio:.2%}"
+
     def test_stress_click(self):
         """压力测试 - 点击函数"""
         print(f"\n=== 压力测试: click ({self.config.iterations}次) ===")
 
         if not self.controller_id:
-            print("  没有有效的控制器ID，无法执行点击测试")
-            return
+            pytest.skip("未检测到可用控制器")
 
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -403,13 +358,18 @@ class TestStressPerformance:
         # 打印详细统计信息
         self._print_stress_test_stats(results, "click")
 
+        # 轻量级断言
+        assert results, "点击压力测试没有产生任何结果"
+        successes = [r for r in results if r.success]
+        success_ratio = len(successes) / len(results)
+        assert success_ratio >= 0.8, f"点击成功率过低: {success_ratio:.2%}"
+
     def test_stress_swipe(self):
         """压力测试 - 滑动函数"""
         print(f"\n=== 压力测试: swipe ({self.config.iterations}次) ===")
 
         if not self.controller_id:
-            print("  没有有效的控制器ID，无法执行滑动测试")
-            return
+            pytest.skip("未检测到可用控制器")
 
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -431,13 +391,18 @@ class TestStressPerformance:
         # 打印详细统计信息
         self._print_stress_test_stats(results, "swipe")
 
+        # 轻量级断言
+        assert results, "滑动压力测试没有产生任何结果"
+        successes = [r for r in results if r.success]
+        success_ratio = len(successes) / len(results)
+        assert success_ratio >= 0.8, f"滑动成功率过低: {success_ratio:.2%}"
+
     def test_stress_input_text(self):
         """压力测试 - 输入文本函数"""
         print(f"\n=== 压力测试: input_text ({self.config.iterations}次) ===")
 
         if not self.controller_id:
-            print("  没有有效的控制器ID，无法执行输入文本测试")
-            return
+            pytest.skip("未检测到可用控制器")
 
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -455,13 +420,18 @@ class TestStressPerformance:
         # 打印详细统计信息
         self._print_stress_test_stats(results, "input_text")
 
+        # 轻量级断言
+        assert results, "输入文本压力测试没有产生任何结果"
+        successes = [r for r in results if r.success]
+        success_ratio = len(successes) / len(results)
+        assert success_ratio >= 0.8, f"输入文本成功率过低: {success_ratio:.2%}"
+
     def test_stress_click_key(self):
         """压力测试 - 按键点击函数"""
         print(f"\n=== 压力测试: click_key ({self.config.iterations}次) ===")
 
         if not self.controller_id:
-            print("  没有有效的控制器ID，无法执行按键点击测试")
-            return
+            pytest.skip("未检测到可用控制器")
 
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -479,19 +449,23 @@ class TestStressPerformance:
         # 打印详细统计信息
         self._print_stress_test_stats(results, "click_key")
 
+        # 轻量级断言
+        assert results, "按键点击压力测试没有产生任何结果"
+        successes = [r for r in results if r.success]
+        success_ratio = len(successes) / len(results)
+        assert success_ratio >= 0.8, f"按键点击成功率过低: {success_ratio:.2%}"
+
     def test_stress_scroll(self):
         """压力测试 - 滚动函数"""
         print(f"\n=== 压力测试: scroll ({self.config.iterations}次) ===")
 
         if not self.controller_id:
-            print("  没有有效的控制器ID，无法执行滚动测试")
-            return
+            pytest.skip("未检测到可用控制器")
 
         # 检查是否为 ADB 控制器
         info = controller_info_registry.get(self.controller_id)
         if info and info.controller_type == ControllerType.ADB:
-            print("  当前控制器为 ADB，跳过 scroll 压力测试 (仅支持 Windows)")
-            return
+            pytest.skip("当前控制器为 ADB，跳过 scroll 压力测试 (仅支持 Windows)")
 
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -510,13 +484,18 @@ class TestStressPerformance:
         # 打印详细统计信息
         self._print_stress_test_stats(results, "scroll")
 
+        # 轻量级断言
+        assert results, "滚动压力测试没有产生任何结果"
+        successes = [r for r in results if r.success]
+        success_ratio = len(successes) / len(results)
+        assert success_ratio >= 0.8, f"滚动成功率过低: {success_ratio:.2%}"
+
     def test_stress_double_click(self):
         """压力测试 - 双击函数"""
         print(f"\n=== 压力测试: double_click ({self.config.iterations}次) ===")
 
         if not self.controller_id:
-            print("  没有有效的控制器ID，无法执行双击测试")
-            return
+            pytest.skip("未检测到可用控制器")
 
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -534,6 +513,12 @@ class TestStressPerformance:
 
         # 打印详细统计信息
         self._print_stress_test_stats(results, "double_click")
+
+        # 轻量级断言
+        assert results, "双击压力测试没有产生任何结果"
+        successes = [r for r in results if r.success]
+        success_ratio = len(successes) / len(results)
+        assert success_ratio >= 0.8, f"双击成功率过低: {success_ratio:.2%}"
 
     def _print_stress_test_stats(self, results: List, function_name: str):
         """打印压力测试的详细统计信息"""

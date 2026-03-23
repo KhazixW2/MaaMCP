@@ -11,7 +11,7 @@
 
 import time
 from threading import Thread, Event
-from queue import Queue, Empty
+from queue import Queue, Empty, Full
 from typing import List, Dict, Any
 
 # 导入 MCP Core 和 Registry
@@ -109,7 +109,13 @@ def run_pipeline_loop(
                 time.sleep(interval)
                 continue
 
-            thread_logger.debug(f"[Frame {frame_count}] OCR 成功，结果条数: {len(ocr_results) if isinstance(ocr_results, list) else 0}")
+            # 检查是否为错误信息（字符串）
+            if isinstance(ocr_results, str):
+                thread_logger.warning(f"[Frame {frame_count}] OCR 错误: {ocr_results}")
+                time.sleep(interval)
+                continue
+
+            thread_logger.debug(f"[Frame {frame_count}] OCR 成功，结果条数: {len(ocr_results)}")
 
             # 将 OCR 结果放入消息队列
             message_data = {
@@ -120,8 +126,8 @@ def run_pipeline_loop(
             }
             try:
                 message_queue.put_nowait(message_data)
-                thread_logger.info(f"📷 OCR 结果: {len(ocr_results) if isinstance(ocr_results, list) else 0} 条")
-            except:
+                thread_logger.info(f"📷 OCR 结果: {len(ocr_results)} 条")
+            except Full:
                 thread_logger.warning(f"[Frame {frame_count}] 消息队列已满，丢弃 OCR 结果")
 
             elapsed = time.time() - loop_start
